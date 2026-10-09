@@ -39,3 +39,57 @@ export function validarRun(run) {
 
   return dv === dvEsperado ? "" : "El RUN ingresado no es válido (dígito verificador incorrecto).";
 }
+
+export function validarContrasena(contrasena) {
+  if (contrasena.length < 4 || contrasena.length > 10) {
+    return "La contraseña debe tener entre 4 y 10 caracteres.";
+  }
+  return "";
+}
+
+function validarTexto(valor, mensajeObligatorio, max, obligatorio = true) {
+  const texto = (valor ?? "").trim();
+  if (!texto) return obligatorio ? mensajeObligatorio : "";
+  if (texto.length > max) return `Máximo ${max} caracteres.`;
+  return "";
+}
+
+function validarCorreoCampo(valor, obligatorio = true) {
+  const correo = (valor ?? "").trim();
+  if (!correo) return obligatorio ? "El correo es obligatorio." : "";
+  if (correo.length > 100) return "Máximo 100 caracteres.";
+  return validarCorreo(correo);
+}
+
+// Agrega la clave solo cuando hay error, asi un objeto vacio significa "valido"
+function reunir(campos) {
+  const errores = {};
+  Object.entries(campos).forEach(([clave, mensaje]) => {
+    if (mensaje) errores[clave] = mensaje;
+  });
+  return errores;
+}
+
+export function validarLogin({ correo, contrasena }) {
+  return reunir({
+    correo: validarCorreoCampo(correo),
+    contrasena: validarContrasena(contrasena ?? "")
+  });
+}
+
+export function validarRegistro(datos) {
+  return reunir({
+    run: validarRun(datos.run ?? ""),
+    nombre: validarTexto(datos.nombre, "El nombre es obligatorio.", 50),
+    apellidos: validarTexto(datos.apellidos, "Los apellidos son obligatorios.", 100),
+    correo: validarCorreoCampo(datos.correo),
+    contrasena: validarContrasena(datos.contrasena ?? ""),
+    confirmar:
+      datos.confirmar !== datos.contrasena || !datos.confirmar
+        ? "Las contraseñas no coinciden."
+        : "",
+    region: datos.region ? "" : "Selecciona una región.",
+    comuna: datos.comuna ? "" : "Selecciona una comuna.",
+    direccion: validarTexto(datos.direccion, "La dirección es obligatoria.", 300)
+  });
+}
