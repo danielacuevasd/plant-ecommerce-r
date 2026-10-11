@@ -2,7 +2,8 @@
 // Los datos viven en localStorage y se inicializan con los datos semilla.
 
 export const CLAVES = {
-  productos: "florae_productos"
+  productos: "florae_productos",
+  usuarios: "florae_usuarios"
 };
 
 export const productosSemilla = [
@@ -61,6 +62,28 @@ export const productosSemilla = [
     descripcionCorta: "Set de 3 piezas: pala, rastrillo y tijera de podar.",
     descripcion: "Set de herramientas básicas de jardinería en acero inoxidable con mango ergonómico: pala de trasplante, rastrillo de mano y tijera de podar.",
     imagen: "/img/herramientas.jpg"
+  }
+];
+
+// Los RUN semilla tienen dígito verificador válido
+export const usuariosSemilla = [
+  {
+    id: 1, run: "191102207", nombre: "Camila", apellidos: "Reyes Soto",
+    correo: "camila.reyes@gmail.com", contrasena: "cliente", tipo: "Cliente",
+    region: "Región Metropolitana de Santiago", comuna: "Santiago",
+    direccion: "Av. Siempre Viva 123, Santiago"
+  },
+  {
+    id: 2, run: "128374655", nombre: "Matías", apellidos: "Fuentes Lara",
+    correo: "matias.fuentes@duoc.cl", contrasena: "vendedor", tipo: "Vendedor",
+    region: "Región de Valparaíso", comuna: "Viña del Mar",
+    direccion: "Calle Los Aromos 456, Viña del Mar"
+  },
+  {
+    id: 3, run: "175293841", nombre: "Marcelo", apellidos: "Cáceres",
+    correo: "marcelo.caceres@profesor.duoc.cl", contrasena: "admin", tipo: "Administrador",
+    region: "Región Metropolitana de Santiago", comuna: "Ñuñoa",
+    direccion: "Pasaje Las Flores 789, Ñuñoa"
   }
 ];
 
@@ -130,4 +153,53 @@ export function eliminarProducto(id) {
 
 export function obtenerProductosStockCritico() {
   return obtenerProductos().filter((p) => p.stock <= p.stockCritico);
+}
+
+// CRUD de usuarios
+
+export function obtenerUsuarios() {
+  return leer(CLAVES.usuarios, usuariosSemilla);
+}
+
+export function obtenerUsuarioPorId(id) {
+  return obtenerUsuarios().find((u) => u.id === Number(id)) || null;
+}
+
+export function existeCorreo(correo, idExcluido = null) {
+  const buscado = correo.trim().toLowerCase();
+  return obtenerUsuarios().some(
+    (u) => u.correo.toLowerCase() === buscado && u.id !== Number(idExcluido)
+  );
+}
+
+export function crearUsuario(datos) {
+  const usuarios = obtenerUsuarios();
+  const nuevo = { tipo: "Cliente", ...datos, id: siguienteId(usuarios) };
+  escribir(CLAVES.usuarios, [...usuarios, nuevo]);
+  return nuevo;
+}
+
+export function actualizarUsuario(id, cambios) {
+  const usuarios = obtenerUsuarios();
+  const indice = usuarios.findIndex((u) => u.id === Number(id));
+  if (indice === -1) return null;
+  usuarios[indice] = { ...usuarios[indice], ...cambios, id: usuarios[indice].id };
+  escribir(CLAVES.usuarios, usuarios);
+  return usuarios[indice];
+}
+
+export function eliminarUsuario(id) {
+  const usuarios = obtenerUsuarios();
+  const restantes = usuarios.filter((u) => u.id !== Number(id));
+  escribir(CLAVES.usuarios, restantes);
+  return restantes.length !== usuarios.length;
+}
+
+// Autenticacion simulada: compara correo y contrasena contra los usuarios guardados
+export function autenticarUsuario(correo, contrasena) {
+  const buscado = correo.trim().toLowerCase();
+  const usuario = obtenerUsuarios().find(
+    (u) => u.correo.toLowerCase() === buscado && u.contrasena === contrasena
+  );
+  return usuario || null;
 }
