@@ -1,0 +1,12 @@
+/* Ajustes para que Bootstrap y los estilos de EP1 convivan */
+
+.nav-principal ul {
+    margin-bottom: 0;
+    padding-left: 0;
+}
+
+@media (max-width: 767.98px) {
+    .nav-principal ul {
+        gap: 0.75rem;
+    }
+}
