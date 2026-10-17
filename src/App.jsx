@@ -5,6 +5,7 @@ import { CartProvider } from "./context/CartContext";
 import Home from "./pages/Home";
 import NoEncontrado from "./pages/NoEncontrado";
 import Productos from "./pages/Productos";
+import DetalleProducto from "./pages/DetalleProducto";
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
             <Route index element={<Home />} />
             <Route path="*" element={<NoEncontrado />} />
             <Route path="productos" element={<Productos />} />
+            <Route path="productos/:id" element={<DetalleProducto />} />
           </Route>
         </Routes>
       </CartProvider>
