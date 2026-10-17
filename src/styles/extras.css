@@ -10,3 +10,19 @@
         gap: 0.75rem;
     }
 }
+
+/* Los campos de Bootstrap se alinean con la paleta Florae */
+.form-control,
+.form-select {
+    border-color: var(--color-borde);
+    border-radius: var(--radio-base);
+    background-color: var(--color-blanco);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--color-acento);
+    box-shadow: none;
+    outline: 2px solid var(--color-acento);
+    outline-offset: 2px;
+}
