@@ -27,7 +27,7 @@ export default function Productos() {
 
       <section className="listado-productos">
         <form className="row g-2 mb-4" role="search" onSubmit={(e) => e.preventDefault()}>
-          <div className="col-12 col-md-6">
+          <div className="col-12 col-md-8">
             <label htmlFor="buscar" className="visually-hidden">Buscar producto</label>
             <input
               id="buscar"
