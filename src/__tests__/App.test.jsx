@@ -6,7 +6,7 @@ import App from "../App";
 describe("App", () => {
   it("muestra la portada de la tienda en la ruta inicial", () => {
     render(
-      <MemoryRouter initialEntries={["/"]}>
+      <MemoryRouter initialEntries={["/"]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <App />
       </MemoryRouter>
     );
@@ -15,7 +15,7 @@ describe("App", () => {
 
   it("muestra la página 404 en una ruta que no existe", () => {
     render(
-      <MemoryRouter initialEntries={["/ruta-inexistente"]}>
+      <MemoryRouter initialEntries={["/ruta-inexistente"]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <App />
       </MemoryRouter>
     );
