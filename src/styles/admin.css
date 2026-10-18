@@ -1,0 +1,210 @@
+/* FLORAE — Hoja de estilos del panel de administrador */
+/* Se carga en conjunto con estilos.css, que aporta las variables
+   globales (colores, tipografía) y componentes reutilizados
+   (botones .btn-principal / .btn-secundario). */
+
+.admin-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.admin-sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background-color: var(--color-verde-oscuro);
+    color: var(--color-fondo);
+    display: flex;
+    flex-direction: column;
+    padding: 1.75rem 1.25rem;
+}
+
+.admin-sidebar__logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--fuente-titulos);
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--color-fondo);
+    margin-bottom: 2.5rem;
+}
+
+.admin-nav {
+    flex: 1;
+}
+
+.admin-nav ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.admin-nav a {
+    display: block;
+    padding: 0.65rem 0.9rem;
+    border-radius: var(--radio-base);
+    font-size: 0.95rem;
+    color: #C9CDBE;
+}
+
+.admin-nav a:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--color-fondo);
+}
+
+.admin-nav a[aria-current="page"] {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: var(--color-fondo);
+    font-weight: 600;
+}
+
+.admin-sidebar__pie {
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    padding-top: 1.25rem;
+}
+
+.admin-sidebar__pie a {
+    font-size: 0.85rem;
+    color: #C9CDBE;
+}
+
+.admin-sidebar__pie a:hover {
+    color: var(--color-fondo);
+}
+
+.admin-contenido {
+    flex: 1;
+    padding: 2.5rem 3rem;
+    background-color: var(--color-fondo);
+}
+
+.admin-header {
+    margin-bottom: 2rem;
+}
+
+.admin-resumen {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.admin-tarjeta {
+    background-color: var(--color-blanco);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-base);
+    padding: 1.5rem;
+}
+
+.admin-tarjeta h2 {
+    font-size: 2rem;
+    margin-bottom: 0.25rem;
+}
+
+.admin-tarjeta p {
+    font-size: 0.9rem;
+    color: var(--color-verde-suave);
+}
+
+.admin-tarjeta--alerta h2 {
+    color: var(--color-error);
+}
+
+.admin-accesos__grid {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+/* Tabla de administración (listados de producto/usuario) */
+
+.admin-tabla-contenedor {
+    background-color: var(--color-blanco);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-base);
+    overflow-x: auto;
+}
+
+.admin-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.admin-tabla th,
+.admin-tabla td {
+    text-align: left;
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid var(--color-borde);
+    white-space: nowrap;
+}
+
+.admin-tabla th {
+    font-family: var(--fuente-titulos);
+    color: var(--color-verde-oscuro);
+    background-color: var(--color-fondo-alterno);
+}
+
+.admin-tabla tr:last-child td {
+    border-bottom: none;
+}
+
+.admin-tabla .acciones {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.admin-tabla .acciones a,
+.admin-tabla .acciones button {
+    font-size: 0.85rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-verde-oscuro);
+    text-decoration: underline;
+}
+
+.admin-tabla .acciones .accion-eliminar {
+    color: var(--color-error);
+}
+
+.admin-encabezado-lista {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.estado {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.estado--ok {
+    background-color: #E3E9DC;
+    color: var(--color-verde-oscuro);
+}
+
+.estado--alerta {
+    background-color: #F3DEDA;
+    color: var(--color-error);
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 900px) {
+    .admin-layout {
+        flex-direction: column;
+    }
+
+    .admin-sidebar {
+        width: 100%;
+    }
+
+    .admin-contenido {
+        padding: 1.75rem 1.5rem;
+    }
+}
