@@ -13,6 +13,7 @@ import Contacto from "./pages/Contacto";
 import AdminLayout from "./components/AdminLayout";
 import AdminInicio from "./pages/admin/AdminInicio";
 import AdminProductos from "./pages/admin/AdminProductos";
+import AdminProductoForm from "./pages/admin/AdminProductoForm";
 
 export default function App() {
   return (
@@ -32,6 +33,8 @@ export default function App() {
           <Route path="admin" element={<AdminLayout />}>
             <Route index element={<AdminInicio />} />
             <Route path="productos" element={<AdminProductos />} />
+            <Route path="productos/nuevo" element={<AdminProductoForm />} />
+            <Route path="productos/:id/editar" element={<AdminProductoForm />} />
           </Route>
         </Routes>
       </CartProvider>
