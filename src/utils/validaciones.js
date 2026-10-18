@@ -93,3 +93,11 @@ export function validarRegistro(datos) {
     direccion: validarTexto(datos.direccion, "La dirección es obligatoria.", 300)
   });
 }
+
+export function validarContacto({ nombre, correo, comentario }) {
+  return reunir({
+    nombre: validarTexto(nombre, "El nombre es obligatorio.", 100),
+    correo: validarCorreoCampo(correo, false),
+    comentario: validarTexto(comentario, "El comentario es obligatorio.", 500)
+  });
+}
