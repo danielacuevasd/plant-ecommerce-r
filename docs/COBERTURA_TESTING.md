@@ -276,3 +276,10 @@ npm run coverage
 ```
 
 Al terminar, la tabla de cobertura aparece en la terminal y el reporte navegable queda en `coverage/index.html`. Allí se puede entrar a cada archivo y ver las líneas no cubiertas marcadas en rojo.
+
+
+### Evidencia de la última ejecución
+
+![Resultado de npm test](img/test-resultado.png)
+
+![Reporte de cobertura](img/coverage-reporte.png)
