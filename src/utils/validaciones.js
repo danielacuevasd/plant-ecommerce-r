@@ -126,3 +126,11 @@ export function validarProducto(datos) {
     stockCritico: validarEnteroNoNegativo(datos.stockCritico, false)
   });
 }
+
+export function validarUsuarioAdmin(datos) {
+  // Reutiliza las reglas del registro; en el admin no se confirma la contraseña
+  const errores = validarRegistro({ ...datos, confirmar: datos.contrasena });
+  delete errores.confirmar;
+  if (!datos.tipo) errores.tipo = "Selecciona un tipo de usuario.";
+  return errores;
+}
