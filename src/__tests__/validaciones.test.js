@@ -6,7 +6,8 @@ import {
   validarLogin,
   validarProducto,
   validarRegistro,
-  validarRun
+  validarRun,
+  validarUsuarioAdmin
 } from "../utils/validaciones";
 
 describe("validarRun", () => {
@@ -147,5 +148,46 @@ describe("validarProducto", () => {
     const errores = validarProducto({ ...valido, descripcion: "x".repeat(501) });
 
     expect(errores.descripcion).toBe("Máximo 500 caracteres.");
+  });
+});
+
+describe("validarUsuarioAdmin", () => {
+  const valido = {
+    run: "191102207", nombre: "Ana", apellidos: "Pérez", correo: "ana@gmail.com",
+    contrasena: "abcd", tipo: "Cliente", region: "Región de Valparaíso",
+    comuna: "Quilpué", direccion: "Calle 1"
+  };
+
+  it("no devuelve errores con datos válidos", () => {
+    expect(validarUsuarioAdmin(valido)).toEqual({});
+  });
+
+  it("exige elegir un tipo de usuario", () => {
+    const errores = validarUsuarioAdmin({ ...valido, tipo: "" });
+
+    expect(errores.tipo).toBe("Selecciona un tipo de usuario.");
+  });
+
+  it("no pide confirmar la contraseña, a diferencia del registro", () => {
+    expect(validarUsuarioAdmin(valido).confirmar).toBeUndefined();
+  });
+
+  it("aplica las mismas reglas de RUN, correo y contraseña que el registro", () => {
+    const errores = validarUsuarioAdmin({ ...valido, run: "191102201", correo: "ana@hotmail.com", contrasena: "ab" });
+
+    expect(errores.run).toMatch(/dígito verificador/i);
+    expect(errores.correo).toMatch(/solo se aceptan/i);
+    expect(errores.contrasena).toMatch(/entre 4 y 10/);
+  });
+
+  it("devuelve un error por cada campo obligatorio vacío", () => {
+    const errores = validarUsuarioAdmin({
+      run: "", nombre: "", apellidos: "", correo: "", contrasena: "",
+      tipo: "", region: "", comuna: "", direccion: ""
+    });
+
+    expect(Object.keys(errores).sort()).toEqual([
+      "apellidos", "comuna", "contrasena", "correo", "direccion", "nombre", "region", "run", "tipo"
+    ]);
   });
 });
