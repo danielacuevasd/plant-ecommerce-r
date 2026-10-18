@@ -10,6 +10,8 @@ import Carrito from "./pages/Carrito";
 import Login from "./pages/Login";
 import Registro from "./pages/Registro";
 import Contacto from "./pages/Contacto";
+import AdminLayout from "./components/AdminLayout";
+import AdminInicio from "./pages/admin/AdminInicio";
 
 export default function App() {
   return (
@@ -25,6 +27,9 @@ export default function App() {
             <Route path="login" element={<Login />} />
             <Route path="registro" element={<Registro />} />
             <Route path="contacto" element={<Contacto />} />
+          </Route>
+          <Route path="admin" element={<AdminLayout />}>
+            <Route index element={<AdminInicio />} />
           </Route>
         </Routes>
       </CartProvider>
