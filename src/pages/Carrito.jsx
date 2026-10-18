@@ -5,14 +5,24 @@ import { useCart } from "../context/CartContext";
 import { formatearPrecio } from "../utils/formato";
 
 export default function Carrito() {
-  const { items, subtotal, descuento, total, cupon, cambiarCantidad, eliminar, aplicarCupon } = useCart();
+  const { items, subtotal, descuento, total, cupon, cambiarCantidad, eliminar, vaciar, aplicarCupon } = useCart();
   const [codigo, setCodigo] = useState("");
   const [errorCupon, setErrorCupon] = useState("");
+  const [mensajePago, setMensajePago] = useState("");
 
   function manejarCupon(evento) {
     evento.preventDefault();
     const resultado = aplicarCupon(codigo);
     setErrorCupon(resultado.error);
+  }
+
+    function pagar() {
+    if (items.length === 0) {
+      setMensajePago("Tu carrito está vacío. Agrega productos antes de continuar.");
+      return;
+    }
+    vaciar();
+    setMensajePago("Compra simulada con éxito. El pago real se implementará en una etapa posterior.");
   }
 
   return (
@@ -66,6 +76,9 @@ export default function Carrito() {
             </div>
             {errorCupon && <small className="mensaje-error" role="alert">{errorCupon}</small>}
           </form>
+          
+          <button type="button" className="btn-principal" onClick={pagar}>Pagar</button>
+          {mensajePago && <p role="status" className="mensaje-exito">{mensajePago}</p>}
         </aside>
       </section>
     </>
