@@ -1,0 +1,40 @@
+/* Ajustes para que Bootstrap y los estilos de EP1 convivan */
+
+.nav-principal ul {
+    margin-bottom: 0;
+    padding-left: 0;
+}
+
+@media (max-width: 767.98px) {
+    .nav-principal ul {
+        gap: 0.75rem;
+    }
+}
+
+/* Los campos de Bootstrap se alinean con la paleta Florae */
+.form-control,
+.form-select {
+    border-color: var(--color-borde);
+    border-radius: var(--radio-base);
+    background-color: var(--color-blanco);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--color-acento);
+    box-shadow: none;
+    outline: 2px solid var(--color-acento);
+    outline-offset: 2px;
+}
+
+.mensaje-exito {
+    color: var(--color-verde-suave);
+    font-size: 0.9rem;
+    margin-top: 0.75rem;
+}
+
+.contador-caracteres {
+    display: block;
+    text-align: right;
+    color: var(--color-verde-suave);
+}
