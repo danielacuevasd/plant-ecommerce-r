@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  validarContacto,
   validarContrasena,
   validarCorreo,
   validarLogin,
@@ -74,5 +75,31 @@ describe("validarRegistro", () => {
     expect(errores.confirmar).toMatch(/no coinciden/i);
     expect(errores.nombre).toBeDefined();
     expect(errores.comuna).toBeDefined();
+  });
+});
+
+describe("validarContacto", () => {
+  it("no devuelve errores con datos válidos y sin correo", () => {
+    expect(validarContacto({ nombre: "Ana", correo: "", comentario: "Hola" })).toEqual({});
+  });
+
+  it("exige nombre y comentario, pero el correo es opcional", () => {
+    const errores = validarContacto({ nombre: "", correo: "", comentario: "" });
+
+    expect(errores.nombre).toBe("El nombre es obligatorio.");
+    expect(errores.comentario).toBe("El comentario es obligatorio.");
+    expect(errores.correo).toBeUndefined();
+  });
+
+  it("rechaza comentarios de más de 500 caracteres", () => {
+    const errores = validarContacto({ nombre: "Ana", correo: "", comentario: "x".repeat(501) });
+
+    expect(errores.comentario).toBe("Máximo 500 caracteres.");
+  });
+
+  it("si se ingresa un correo, debe tener un dominio permitido", () => {
+    const errores = validarContacto({ nombre: "Ana", correo: "ana@hotmail.com", comentario: "Hola" });
+
+    expect(errores.correo).toMatch(/solo se aceptan/i);
   });
 });
