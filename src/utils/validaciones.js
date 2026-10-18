@@ -97,7 +97,7 @@ export function validarRegistro(datos) {
 export function validarContacto({ nombre, correo, comentario }) {
   return reunir({
     nombre: validarTexto(nombre, "El nombre es obligatorio.", 100),
-    correo: validarCorreoCampo(correo, false),
+    correo: validarCorreoCampo(correo),
     comentario: validarTexto(comentario, "El comentario es obligatorio.", 500)
   });
 }
