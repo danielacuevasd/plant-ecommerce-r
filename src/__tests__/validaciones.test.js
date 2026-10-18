@@ -4,8 +4,10 @@ import {
   validarContrasena,
   validarCorreo,
   validarLogin,
+  validarProducto,
   validarRegistro,
-  validarRun
+  validarRun,
+  validarUsuarioAdmin
 } from "../utils/validaciones";
 
 describe("validarRun", () => {
@@ -101,5 +103,91 @@ describe("validarContacto", () => {
     const errores = validarContacto({ nombre: "Ana", correo: "ana@hotmail.com", comentario: "Hola" });
 
     expect(errores.correo).toMatch(/solo se aceptan/i);
+  });
+});
+
+describe("validarProducto", () => {
+  const valido = {
+    codigo: "PL-009", nombre: "Helecho", descripcion: "", precio: "7000",
+    categoria: "interior", stock: "5", stockCritico: ""
+  };
+
+  it("no devuelve errores con datos válidos (descripción y stock crítico son opcionales)", () => {
+    expect(validarProducto(valido)).toEqual({});
+  });
+
+  it("exige código de al menos 3 caracteres, nombre y categoría", () => {
+    const errores = validarProducto({ ...valido, codigo: "PL", nombre: "", categoria: "" });
+
+    expect(errores.codigo).toBe("El código debe tener al menos 3 caracteres.");
+    expect(errores.nombre).toBe("El nombre es obligatorio.");
+    expect(errores.categoria).toBe("Selecciona una categoría.");
+  });
+
+  it("el precio debe ser un número mayor o igual a 0", () => {
+    expect(validarProducto({ ...valido, precio: "0" }).precio).toBeUndefined();
+    expect(validarProducto({ ...valido, precio: "-5" }).precio).toMatch(/mayor o igual a 0/);
+    expect(validarProducto({ ...valido, precio: "abc" }).precio).toBeDefined();
+    expect(validarProducto({ ...valido, precio: "" }).precio).toBeDefined();
+  });
+
+  it("el stock debe ser un entero mayor o igual a 0", () => {
+    expect(validarProducto({ ...valido, stock: "0" }).stock).toBeUndefined();
+    expect(validarProducto({ ...valido, stock: "1.5" }).stock).toBeDefined();
+    expect(validarProducto({ ...valido, stock: "-1" }).stock).toBeDefined();
+    expect(validarProducto({ ...valido, stock: "" }).stock).toBeDefined();
+  });
+
+  it("el stock crítico es opcional, pero si se ingresa debe ser válido", () => {
+    expect(validarProducto({ ...valido, stockCritico: "" }).stockCritico).toBeUndefined();
+    expect(validarProducto({ ...valido, stockCritico: "2" }).stockCritico).toBeUndefined();
+    expect(validarProducto({ ...valido, stockCritico: "-1" }).stockCritico).toBeDefined();
+  });
+
+  it("la descripción no puede superar los 500 caracteres", () => {
+    const errores = validarProducto({ ...valido, descripcion: "x".repeat(501) });
+
+    expect(errores.descripcion).toBe("Máximo 500 caracteres.");
+  });
+});
+
+describe("validarUsuarioAdmin", () => {
+  const valido = {
+    run: "191102207", nombre: "Ana", apellidos: "Pérez", correo: "ana@gmail.com",
+    contrasena: "abcd", tipo: "Cliente", region: "Región de Valparaíso",
+    comuna: "Quilpué", direccion: "Calle 1"
+  };
+
+  it("no devuelve errores con datos válidos", () => {
+    expect(validarUsuarioAdmin(valido)).toEqual({});
+  });
+
+  it("exige elegir un tipo de usuario", () => {
+    const errores = validarUsuarioAdmin({ ...valido, tipo: "" });
+
+    expect(errores.tipo).toBe("Selecciona un tipo de usuario.");
+  });
+
+  it("no pide confirmar la contraseña, a diferencia del registro", () => {
+    expect(validarUsuarioAdmin(valido).confirmar).toBeUndefined();
+  });
+
+  it("aplica las mismas reglas de RUN, correo y contraseña que el registro", () => {
+    const errores = validarUsuarioAdmin({ ...valido, run: "191102201", correo: "ana@hotmail.com", contrasena: "ab" });
+
+    expect(errores.run).toMatch(/dígito verificador/i);
+    expect(errores.correo).toMatch(/solo se aceptan/i);
+    expect(errores.contrasena).toMatch(/entre 4 y 10/);
+  });
+
+  it("devuelve un error por cada campo obligatorio vacío", () => {
+    const errores = validarUsuarioAdmin({
+      run: "", nombre: "", apellidos: "", correo: "", contrasena: "",
+      tipo: "", region: "", comuna: "", direccion: ""
+    });
+
+    expect(Object.keys(errores).sort()).toEqual([
+      "apellidos", "comuna", "contrasena", "correo", "direccion", "nombre", "region", "run", "tipo"
+    ]);
   });
 });
