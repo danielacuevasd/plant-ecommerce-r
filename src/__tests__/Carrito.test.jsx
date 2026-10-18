@@ -75,4 +75,23 @@ describe("Carrito", () => {
 
     expect(screen.getByRole("alert")).toHaveTextContent("Ingresa un código de cupón.");
   });
+
+  it("Pagar con productos vacía el carrito y confirma la compra", async () => {
+    cargarCarrito([{ id: 1, cantidad: 2 }]);
+    renderConProveedores(<Carrito />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Pagar" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent(/compra simulada con éxito/i);
+    expect(screen.getByTestId("carrito-total")).toHaveTextContent("$0");
+    expect(JSON.parse(localStorage.getItem("florae_carrito")).items).toEqual([]);
+  });
+
+  it("Pagar con el carrito vacío muestra un aviso (renderizado condicional)", async () => {
+    renderConProveedores(<Carrito />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Pagar" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent(/agrega productos antes de continuar/i);
+  });
 });
