@@ -2,16 +2,46 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import ProductList from "../components/ProductList";
 import { useCart } from "../context/CartContext";
-import { obtenerProductoPorId, obtenerProductos } from "../data/db";
+import { useCargar } from "../hooks/useCargar";
+import { obtenerProductoPorId, obtenerProductos } from "../services/productosService";
 import { formatearPrecio } from "../utils/formato";
+
+// Trae el producto y, si existe, otros de su misma categoría
+async function cargarDetalle(id) {
+  const producto = await obtenerProductoPorId(id);
+  if (!producto) return { producto: null, relacionados: [] };
+
+  const mismaCategoria = await obtenerProductos(producto.categoria);
+  const relacionados = mismaCategoria.filter((p) => p.id !== producto.id).slice(0, 4);
+  return { producto, relacionados };
+}
 
 export default function DetalleProducto() {
   const { id } = useParams();
   const { agregar } = useCart();
   const [cantidad, setCantidad] = useState(1);
   const [mensaje, setMensaje] = useState("");
+  const { datos, cargando, error } = useCargar(() => cargarDetalle(id), [id]);
 
-  const producto = obtenerProductoPorId(id);
+  if (cargando) {
+    return (
+      <section className="encabezado-pagina">
+        <p role="status" className="texto-secundario">Cargando producto...</p>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="encabezado-pagina">
+        <h1>No pudimos cargar el producto</h1>
+        <p role="alert" className="mensaje-error">{error}</p>
+        <Link to="/productos" className="btn-principal">Volver a productos</Link>
+      </section>
+    );
+  }
+
+  const { producto, relacionados } = datos;
 
   if (!producto) {
     return (
@@ -22,10 +52,6 @@ export default function DetalleProducto() {
       </section>
     );
   }
-
-  const relacionados = obtenerProductos()
-    .filter((p) => p.categoria === producto.categoria && p.id !== producto.id)
-    .slice(0, 4);
 
   function manejarSubmit(evento) {
     evento.preventDefault();

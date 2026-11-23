@@ -1,12 +1,13 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import ProductList from "../components/ProductList";
 import { useCart } from "../context/CartContext";
-import { obtenerProductos } from "../data/db";
+import { useCargar } from "../hooks/useCargar";
+import { obtenerProductos } from "../services/productosService";
 
 export default function Home() {
   const { agregar } = useCart();
-  const [destacados] = useState(() => obtenerProductos().slice(0, 4));
+  const { datos, cargando, error } = useCargar(() => obtenerProductos(), []);
+  const destacados = datos ? datos.slice(0, 4) : [];
 
   return (
     <>
@@ -26,7 +27,9 @@ export default function Home() {
 
       <section className="productos-destacados">
         <h2>Productos destacados</h2>
-        <ProductList productos={destacados} onAgregar={(id) => agregar(id, 1)} />
+        {cargando && <p role="status" className="texto-secundario">Cargando productos...</p>}
+        {error && <p role="alert" className="mensaje-error">{error}</p>}
+        {datos && <ProductList productos={destacados} onAgregar={(id) => agregar(id, 1)} />}
       </section>
     </>
   );
