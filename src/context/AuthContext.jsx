@@ -1,5 +1,10 @@
 import { createContext, useContext, useState } from "react";
-import { autenticarUsuario, crearUsuario, existeCorreo } from "../data/db";
+import {
+  iniciarSesion as apiIniciarSesion,
+  registrarUsuario as apiRegistrarUsuario,
+  cerrarSesion as apiCerrarSesion
+} from "../services/authService";
+import { mensajeDeError } from "../services/api";
 
 const CLAVE_SESION = "florae_sesion";
 
@@ -14,7 +19,8 @@ function leerSesion() {
   }
 }
 
-// Solo se guarda lo necesario para mostrar la sesion (nunca la contrasena)
+// Solo se guarda lo necesario para mostrar la sesion (nunca la contrasena).
+// El JWT vive aparte, bajo la clave florae_token (lo maneja services/api.js).
 function crearSesion(usuario) {
   return { id: usuario.id, nombre: usuario.nombre, correo: usuario.correo, tipo: usuario.tipo };
 }
@@ -29,31 +35,36 @@ export function AuthProvider({ children }) {
     return nueva;
   }
 
-  function iniciarSesion(correo, contrasena) {
-    const usuario = autenticarUsuario(correo, contrasena);
-    if (!usuario) return { ok: false, error: "Correo o contraseña incorrectos." };
-    return { ok: true, sesion: guardarSesion(usuario) };
+  async function iniciarSesion(correo, contrasena) {
+    try {
+      const usuario = await apiIniciarSesion(correo, contrasena);
+      return { ok: true, sesion: guardarSesion(usuario) };
+    } catch (error) {
+      return { ok: false, error: mensajeDeError(error) };
+    }
   }
 
-  function registrar(datos) {
-    if (existeCorreo(datos.correo)) {
-      return { ok: false, error: "Ya existe una cuenta con ese correo." };
+  async function registrar(datos) {
+    try {
+      const usuario = await apiRegistrarUsuario({
+        run: datos.run.trim().toUpperCase(),
+        nombre: datos.nombre.trim(),
+        apellidos: datos.apellidos.trim(),
+        correo: datos.correo.trim(),
+        contrasena: datos.contrasena,
+        fechaNacimiento: datos.fechaNacimiento || undefined,
+        region: datos.region,
+        comuna: datos.comuna,
+        direccion: datos.direccion.trim()
+      });
+      return { ok: true, sesion: guardarSesion(usuario) };
+    } catch (error) {
+      return { ok: false, error: mensajeDeError(error) };
     }
-    const usuario = crearUsuario({
-      run: datos.run.trim().toUpperCase(),
-      nombre: datos.nombre.trim(),
-      apellidos: datos.apellidos.trim(),
-      correo: datos.correo.trim(),
-      contrasena: datos.contrasena,
-      tipo: "Cliente",
-      region: datos.region,
-      comuna: datos.comuna,
-      direccion: datos.direccion.trim()
-    });
-    return { ok: true, sesion: guardarSesion(usuario) };
   }
 
   function cerrarSesion() {
+    apiCerrarSesion(); // borra el token
     localStorage.removeItem(CLAVE_SESION);
     setSesion(null);
   }

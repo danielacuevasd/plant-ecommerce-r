@@ -16,6 +16,7 @@ export default function Registro() {
   const [datos, setDatos] = useState(datosIniciales);
   const [errores, setErrores] = useState({});
   const [errorGeneral, setErrorGeneral] = useState("");
+  const [enviando, setEnviando] = useState(false);
 
   function manejarCambio(evento) {
     const { name, value } = evento.target;
@@ -23,14 +24,17 @@ export default function Registro() {
     setDatos(name === "region" ? { ...datos, region: value, comuna: "" } : { ...datos, [name]: value });
   }
 
-  function manejarSubmit(evento) {
+  async function manejarSubmit(evento) {
     evento.preventDefault();
     const nuevos = validarRegistro(datos);
     setErrores(nuevos);
     setErrorGeneral("");
     if (Object.keys(nuevos).length > 0) return;
 
-    const resultado = registrar(datos);
+    setEnviando(true);
+    const resultado = await registrar(datos);
+    setEnviando(false);
+
     if (!resultado.ok) {
       setErrorGeneral(resultado.error);
       return;
@@ -101,7 +105,9 @@ export default function Registro() {
 
         {errorGeneral && <p role="alert" className="mensaje-error">{errorGeneral}</p>}
 
-        <button type="submit" className="btn-principal">Registrar</button>
+        <button type="submit" className="btn-principal" disabled={enviando}>
+          {enviando ? "Registrando..." : "Registrar"}
+        </button>
 
         <p className="texto-secundario">
           ¿Ya tienes cuenta? <Link to="/login">Inicia sesión aquí</Link>

@@ -10,19 +10,23 @@ export default function Login() {
   const [datos, setDatos] = useState({ correo: "", contrasena: "" });
   const [errores, setErrores] = useState({});
   const [errorGeneral, setErrorGeneral] = useState("");
+  const [enviando, setEnviando] = useState(false);
 
   function manejarCambio(evento) {
     setDatos({ ...datos, [evento.target.name]: evento.target.value });
   }
 
-  function manejarSubmit(evento) {
+  async function manejarSubmit(evento) {
     evento.preventDefault();
     const nuevos = validarLogin(datos);
     setErrores(nuevos);
     setErrorGeneral("");
     if (Object.keys(nuevos).length > 0) return;
 
-    const resultado = iniciarSesion(datos.correo, datos.contrasena);
+    setEnviando(true);
+    const resultado = await iniciarSesion(datos.correo, datos.contrasena);
+    setEnviando(false);
+
     if (!resultado.ok) {
       setErrorGeneral(resultado.error);
       return;
@@ -51,7 +55,9 @@ export default function Login() {
 
         {errorGeneral && <p role="alert" className="mensaje-error">{errorGeneral}</p>}
 
-        <button type="submit" className="btn-principal">Iniciar sesión</button>
+        <button type="submit" className="btn-principal" disabled={enviando}>
+          {enviando ? "Ingresando..." : "Iniciar sesión"}
+        </button>
 
         <p className="texto-secundario">
           ¿No tienes cuenta? <Link to="/registro">Regístrate aquí</Link>
