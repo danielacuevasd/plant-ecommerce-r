@@ -5,7 +5,10 @@ import { useCart } from "../context/CartContext";
 import { formatearPrecio } from "../utils/formato";
 
 export default function Carrito() {
-  const { items, subtotal, descuento, total, cupon, cambiarCantidad, eliminar, vaciar, aplicarCupon } = useCart();
+  const {
+    items, subtotal, descuento, total, cupon, cargando, errorCatalogo,
+    cambiarCantidad, eliminar, vaciar, aplicarCupon
+  } = useCart();
   const [codigo, setCodigo] = useState("");
   const [errorCupon, setErrorCupon] = useState("");
   const [mensajePago, setMensajePago] = useState("");
@@ -16,7 +19,7 @@ export default function Carrito() {
     setErrorCupon(resultado.error);
   }
 
-    function pagar() {
+  function pagar() {
     if (items.length === 0) {
       setMensajePago("Tu carrito está vacío. Agrega productos antes de continuar.");
       return;
@@ -33,15 +36,16 @@ export default function Carrito() {
 
       <section className="carrito-contenido">
         <div className="carrito-items">
-          {items.length === 0 ? (
+          {cargando && <p role="status" className="texto-secundario">Cargando carrito...</p>}
+          {errorCatalogo && <p role="alert" className="mensaje-error">{errorCatalogo}</p>}
+          {!cargando && !errorCatalogo && items.length === 0 && (
             <p className="texto-secundario">
               Tu carrito está vacío. <Link to="/productos">Explora el catálogo</Link>
             </p>
-          ) : (
-            items.map((item) => (
-              <CartItem key={item.id} item={item} onCambiar={cambiarCantidad} onEliminar={eliminar} />
-            ))
           )}
+          {items.map((item) => (
+            <CartItem key={item.id} item={item} onCambiar={cambiarCantidad} onEliminar={eliminar} />
+          ))}
         </div>
 
         <aside className="carrito-resumen">
@@ -76,7 +80,7 @@ export default function Carrito() {
             </div>
             {errorCupon && <small className="mensaje-error" role="alert">{errorCupon}</small>}
           </form>
-          
+
           <button type="button" className="btn-principal" onClick={pagar}>Pagar</button>
           {mensajePago && <p role="status" className="mensaje-exito">{mensajePago}</p>}
         </aside>

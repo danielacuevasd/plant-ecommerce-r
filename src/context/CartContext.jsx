@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useReducer } from "react";
-import { obtenerProductoPorId } from "../data/db";
+import { createContext, useContext, useEffect, useMemo, useReducer, useState } from "react";
+import { mensajeDeError } from "../services/api";
+import { obtenerProductos } from "../services/productosService";
 import {
   calcularTotales,
   carritoReducer,
@@ -22,28 +23,54 @@ function leerEstadoGuardado() {
 
 export function CartProvider({ children }) {
   const [estado, dispatch] = useReducer(carritoReducer, undefined, leerEstadoGuardado);
+  const [catalogo, setCatalogo] = useState(null);
+  const [errorCatalogo, setErrorCatalogo] = useState("");
 
   useEffect(() => {
     localStorage.setItem(CLAVE_CARRITO, JSON.stringify(estado));
   }, [estado]);
 
+  // El carrito solo guarda id y cantidad: nombre, precio y stock se piden a la API
+  useEffect(() => {
+    let activo = true;
+
+    async function cargarCatalogo() {
+      try {
+        const lista = await obtenerProductos();
+        if (activo) setCatalogo(Array.isArray(lista) ? lista : []);
+      } catch (error) {
+        if (activo) setErrorCatalogo(mensajeDeError(error));
+      }
+    }
+
+    cargarCatalogo();
+    return () => {
+      activo = false;
+    };
+  }, []);
+
   const valor = useMemo(() => {
+    const buscar = (id) => catalogo?.find((p) => p.id === id);
+
     // Une id + cantidad con los datos actuales del producto
     const items = estado.items
       .map((item) => {
-        const producto = obtenerProductoPorId(item.id);
+        const producto = buscar(item.id);
         if (!producto) return null;
         return { ...producto, cantidad: item.cantidad, subtotalItem: producto.precio * item.cantidad };
       })
       .filter(Boolean);
 
     const totales = calcularTotales(items, estado.cupon);
-    const stockDe = (id) => obtenerProductoPorId(id)?.stock;
+    const stockDe = (id) => buscar(id)?.stock;
 
     return {
       items,
       cupon: estado.cupon,
-      cantidadTotal: items.reduce((total, i) => total + i.cantidad, 0),
+      // Se calcula con lo guardado para que el Header no parpadee mientras carga el catálogo
+      cantidadTotal: estado.items.reduce((total, i) => total + i.cantidad, 0),
+      cargando: !catalogo && !errorCatalogo && estado.items.length > 0,
+      errorCatalogo,
       ...totales,
       agregar: (id, cantidad = 1) => dispatch({ tipo: "agregar", id, cantidad, stock: stockDe(id) }),
       cambiarCantidad: (id, cantidad) => dispatch({ tipo: "cambiar", id, cantidad, stock: stockDe(id) }),
@@ -60,7 +87,7 @@ export function CartProvider({ children }) {
         return { ok: true, error: "" };
       }
     };
-  }, [estado]);
+  }, [estado, catalogo, errorCatalogo]);
 
   return <CartContext.Provider value={valor}>{children}</CartContext.Provider>;
 }
