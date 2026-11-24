@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import CampoFormulario from "../../components/CampoFormulario";
 import { categorias } from "../../data/categorias";
-import { actualizarProducto, crearProducto, obtenerProductoPorId } from "../../data/db";
+import { useCargar } from "../../hooks/useCargar";
+import { mensajeDeError } from "../../services/api";
+import { actualizarProducto, crearProducto, obtenerProductoPorId } from "../../services/productosService";
 import { validarProducto } from "../../utils/validaciones";
 
 const vacio = {
@@ -10,10 +12,8 @@ const vacio = {
   stock: "", stockCritico: "", imagen: ""
 };
 
-export default function AdminProductoForm() {
-  const { id } = useParams();
+function FormularioProducto({ existente }) {
   const navegar = useNavigate();
-  const existente = id ? obtenerProductoPorId(id) : null;
 
   const [datos, setDatos] = useState(() =>
     existente
@@ -30,19 +30,18 @@ export default function AdminProductoForm() {
       : vacio
   );
   const [errores, setErrores] = useState({});
-
-  if (id && !existente) {
-    return <h1>Producto no encontrado</h1>;
-  }
+  const [errorGeneral, setErrorGeneral] = useState("");
+  const [enviando, setEnviando] = useState(false);
 
   function manejarCambio(evento) {
     setDatos({ ...datos, [evento.target.name]: evento.target.value });
   }
 
-  function manejarSubmit(evento) {
+  async function manejarSubmit(evento) {
     evento.preventDefault();
     const nuevos = validarProducto(datos);
     setErrores(nuevos);
+    setErrorGeneral("");
     if (Object.keys(nuevos).length > 0) return;
 
     const producto = {
@@ -50,17 +49,22 @@ export default function AdminProductoForm() {
       nombre: datos.nombre.trim(),
       descripcion: datos.descripcion.trim(),
       descripcionCorta: datos.descripcion.trim().slice(0, 80),
-      precio: parseFloat(datos.precio),
+      precio: parseInt(datos.precio, 10),
       categoria: datos.categoria,
       stock: parseInt(datos.stock, 10),
       imagen: datos.imagen.trim() || "/img/logo.png"
     };
     if (datos.stockCritico !== "") producto.stockCritico = parseInt(datos.stockCritico, 10);
 
-    if (existente) actualizarProducto(existente.id, producto);
-    else crearProducto(producto);
-
-    navegar("/admin/productos");
+    setEnviando(true);
+    try {
+      if (existente) await actualizarProducto(existente.id, producto);
+      else await crearProducto(producto);
+      navegar("/admin/productos");
+    } catch (error) {
+      setErrorGeneral(mensajeDeError(error));
+      setEnviando(false);
+    }
   }
 
   return (
@@ -83,7 +87,7 @@ export default function AdminProductoForm() {
 
         <div className="campo-formulario-doble">
           <CampoFormulario
-            id="precio" label="Precio" type="number" min="0" step="0.01"
+            id="precio" label="Precio" type="number" min="0" step="1"
             value={datos.precio} onChange={manejarCambio} error={errores.precio}
           />
           <CampoFormulario
@@ -111,10 +115,29 @@ export default function AdminProductoForm() {
           value={datos.imagen} onChange={manejarCambio}
         />
 
-        <button type="submit" className="btn-principal">
-          {existente ? "Guardar cambios" : "Guardar producto"}
+        {errorGeneral && <p role="alert" className="mensaje-error">{errorGeneral}</p>}
+
+        <button type="submit" className="btn-principal" disabled={enviando}>
+          {enviando ? "Guardando..." : existente ? "Guardar cambios" : "Guardar producto"}
         </button>
       </form>
     </>
   );
+}
+
+export default function AdminProductoForm() {
+  const { id } = useParams();
+  const { datos: existente, cargando, error } = useCargar(
+    () => (id ? obtenerProductoPorId(id) : Promise.resolve(null)),
+    [id]
+  );
+
+  // Producto nuevo: no hay nada que cargar
+  if (!id) return <FormularioProducto key="nuevo" existente={null} />;
+
+  if (cargando) return <p role="status" className="texto-secundario">Cargando producto...</p>;
+  if (error) return <p role="alert" className="mensaje-error">{error}</p>;
+  if (!existente) return <h1>Producto no encontrado</h1>;
+
+  return <FormularioProducto key={existente.id} existente={existente} />;
 }

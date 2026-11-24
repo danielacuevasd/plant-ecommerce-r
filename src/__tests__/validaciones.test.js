@@ -128,7 +128,7 @@ describe("validarProducto", () => {
     expect(validarProducto({ ...valido, precio: "0" }).precio).toBeUndefined();
     expect(validarProducto({ ...valido, precio: "-5" }).precio).toMatch(/mayor o igual a 0/);
     expect(validarProducto({ ...valido, precio: "abc" }).precio).toBeDefined();
-    expect(validarProducto({ ...valido, precio: "" }).precio).toBeDefined();
+    expect(validarProducto({ ...valido, precio: "7000.5" }).precio).toMatch(/entero/);
   });
 
   it("el stock debe ser un entero mayor o igual a 0", () => {

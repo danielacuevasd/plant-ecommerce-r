@@ -120,7 +120,7 @@ export function validarProducto(datos) {
     codigo: (datos.codigo ?? "").trim().length < 3 ? "El código debe tener al menos 3 caracteres." : "",
     nombre: validarTexto(datos.nombre, "El nombre es obligatorio.", 100),
     descripcion: validarTexto(datos.descripcion, "", 500, false),
-    precio: isNaN(precio) || precio < 0 ? "El precio debe ser un número mayor o igual a 0." : "",
+    precio: !Number.isInteger(precio) || precio < 0 ? "El precio debe ser un número entero mayor o igual a 0." : "",
     categoria: datos.categoria ? "" : "Selecciona una categoría.",
     stock: validarEnteroNoNegativo(datos.stock),
     stockCritico: validarEnteroNoNegativo(datos.stockCritico, false)
