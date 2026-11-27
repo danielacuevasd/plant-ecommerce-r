@@ -1,5 +1,7 @@
 import { useState } from "react";
 import CampoFormulario from "../components/CampoFormulario";
+import { mensajeDeError } from "../services/api";
+import { enviarMensaje } from "../services/contactoService";
 import { validarContacto } from "../utils/validaciones";
 
 const MAX_COMENTARIO = 500;
@@ -7,6 +9,8 @@ const MAX_COMENTARIO = 500;
 export default function Contacto() {
   const [datos, setDatos] = useState({ nombre: "", correo: "", comentario: "" });
   const [errores, setErrores] = useState({});
+  const [errorGeneral, setErrorGeneral] = useState("");
+  const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
 
   function manejarCambio(evento) {
@@ -14,14 +18,24 @@ export default function Contacto() {
     setEnviado(false);
   }
 
-  function manejarSubmit(evento) {
+  async function manejarSubmit(evento) {
     evento.preventDefault();
     const nuevos = validarContacto(datos);
     setErrores(nuevos);
+    setErrorGeneral("");
     if (Object.keys(nuevos).length > 0) return;
 
-    setDatos({ nombre: "", correo: "", comentario: "" });
-    setEnviado(true);
+    setEnviando(true);
+    try {
+      await enviarMensaje(datos);
+      setDatos({ nombre: "", correo: "", comentario: "" });
+      setEnviado(true);
+    } catch (error) {
+      // Si falla, se conservan los datos para que el usuario no tenga que escribirlos de nuevo
+      setErrorGeneral(mensajeDeError(error));
+    } finally {
+      setEnviando(false);
+    }
   }
 
   return (
@@ -45,7 +59,11 @@ export default function Contacto() {
           {datos.comentario.length} / {MAX_COMENTARIO}
         </small>
 
-        <button type="submit" className="btn-principal">Enviar mensaje</button>
+        {errorGeneral && <p role="alert" className="mensaje-error">{errorGeneral}</p>}
+
+        <button type="submit" className="btn-principal" disabled={enviando}>
+          {enviando ? "Enviando..." : "Enviar mensaje"}
+        </button>
         {enviado && (
           <p role="status" className="mensaje-exito">
             Gracias por tu mensaje. Te responderemos a la brevedad.
