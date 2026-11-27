@@ -4,15 +4,19 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import AdminLayout from "../components/AdminLayout";
 import AdminInicio from "../pages/admin/AdminInicio";
 import { obtenerProductos } from "../services/productosService";
+import { obtenerUsuarios } from "../services/usuariosService";
 import { productosPrueba } from "./productosPrueba";
+import { usuariosPrueba } from "./usuariosPrueba";
 import { renderConProveedores } from "./utils";
 
 vi.mock("../services/productosService");
+vi.mock("../services/usuariosService");
 
 beforeEach(() => {
   vi.resetAllMocks();
   localStorage.clear();
   obtenerProductos.mockResolvedValue(productosPrueba);
+  obtenerUsuarios.mockResolvedValue(usuariosPrueba);
 });
 
 function iniciarSesionComo(tipo) {
@@ -57,6 +61,7 @@ describe("AdminLayout (acceso al panel)", () => {
     const menu = screen.getByRole("navigation", { name: "Panel administrador" });
     expect(within(menu).getByRole("link", { name: "Productos" })).toHaveAttribute("href", "/admin/productos");
     expect(within(menu).getByRole("link", { name: "Usuarios" })).toHaveAttribute("href", "/admin/usuarios");
+    expect(within(menu).getByRole("link", { name: "Mensajes" })).toHaveAttribute("href", "/admin/mensajes");
     await screen.findByText("8");
   });
 });
@@ -73,7 +78,7 @@ describe("AdminInicio", () => {
   });
 
   it("muestra el error si la API falla", async () => {
-    obtenerProductos.mockRejectedValue({ response: { data: { mensaje: "No se pudo conectar con el servidor." } } });
+    obtenerUsuarios.mockRejectedValue({ response: { data: { mensaje: "No se pudo conectar con el servidor." } } });
     iniciarSesionComo("Administrador");
     renderAdmin();
 

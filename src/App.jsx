@@ -17,6 +17,7 @@ import AdminProductos from "./pages/admin/AdminProductos";
 import AdminProductoForm from "./pages/admin/AdminProductoForm";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminUsuarioForm from "./pages/admin/AdminUsuarioForm";
+import AdminMensajes from "./pages/admin/AdminMensajes";
 
 
 export default function App() {
@@ -43,6 +44,7 @@ export default function App() {
             <Route path="usuarios" element={<AdminUsuarios />} />
             <Route path="usuarios/nuevo" element={<AdminUsuarioForm />} />
             <Route path="usuarios/:id/editar" element={<AdminUsuarioForm />} />
+            <Route path="mensajes" element={<AdminMensajes />} />
           </Route>
         </Routes>
       </CartProvider>

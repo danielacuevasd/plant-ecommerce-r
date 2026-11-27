@@ -127,10 +127,12 @@ export function validarProducto(datos) {
   });
 }
 
-export function validarUsuarioAdmin(datos) {
+export function validarUsuarioAdmin(datos, { edicion = false } = {}) {
   // Reutiliza las reglas del registro; en el admin no se confirma la contraseña
   const errores = validarRegistro({ ...datos, confirmar: datos.contrasena });
   delete errores.confirmar;
+  // Al editar, dejar la contraseña vacía conserva la actual
+  if (edicion && !datos.contrasena) delete errores.contrasena;
   if (!datos.tipo) errores.tipo = "Selecciona un tipo de usuario.";
   return errores;
 }

@@ -1,10 +1,21 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router-dom";
-import { describe, expect, it } from "vitest";
-import { obtenerUsuarioPorId, obtenerUsuarios } from "../data/db";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import AdminUsuarioForm from "../pages/admin/AdminUsuarioForm";
+import { actualizarUsuario, crearUsuario, obtenerUsuarioPorId } from "../services/usuariosService";
+import { usuariosPrueba } from "./usuariosPrueba";
 import { renderConProveedores } from "./utils";
+
+vi.mock("../services/usuariosService");
+
+beforeEach(() => {
+  vi.resetAllMocks();
+  localStorage.clear();
+  obtenerUsuarioPorId.mockImplementation(async (id) => usuariosPrueba.find((u) => u.id === Number(id)) ?? null);
+  crearUsuario.mockResolvedValue({ id: 4 });
+  actualizarUsuario.mockResolvedValue({ id: 1 });
+});
 
 function renderFormulario(ruta) {
   return renderConProveedores(
@@ -31,14 +42,14 @@ async function completarFormulario(correo = "ana.perez@gmail.com") {
 }
 
 describe("AdminUsuarioForm", () => {
-  it("el título y el botón cambian según sea nuevo o edición", () => {
+  it("el título y el botón cambian según sea nuevo o edición", async () => {
     const { unmount } = renderFormulario("/admin/usuarios/nuevo");
     expect(screen.getByRole("heading", { name: "Nuevo usuario" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Guardar usuario" })).toBeInTheDocument();
     unmount();
 
     renderFormulario("/admin/usuarios/1/editar");
-    expect(screen.getByRole("heading", { name: "Editar usuario" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Editar usuario" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Guardar cambios" })).toBeInTheDocument();
   });
 
@@ -50,7 +61,7 @@ describe("AdminUsuarioForm", () => {
 
     expect(screen.getByText("El nombre es obligatorio.")).toBeInTheDocument();
     expect(screen.getByText("Selecciona un tipo de usuario.")).toBeInTheDocument();
-    expect(obtenerUsuarios()).toHaveLength(3);
+    expect(crearUsuario).not.toHaveBeenCalled();
   });
 
   it("las comunas dependen de la región seleccionada (estado)", async () => {
@@ -63,31 +74,44 @@ describe("AdminUsuarioForm", () => {
     expect(comuna.querySelectorAll("option")).toHaveLength(5);
   });
 
-  it("crea un usuario nuevo y vuelve al listado", async () => {
+  it("crea un usuario nuevo enviando los datos a la API y vuelve al listado", async () => {
     renderFormulario("/admin/usuarios/nuevo");
 
     await completarFormulario();
     await userEvent.click(screen.getByRole("button", { name: "Guardar usuario" }));
 
     expect(await screen.findByRole("heading", { name: "Lista de usuarios" })).toBeInTheDocument();
-    expect(obtenerUsuarios()).toHaveLength(4);
-    expect(obtenerUsuarioPorId(4)).toMatchObject({ nombre: "Ana", tipo: "Vendedor", comuna: "Quilpué" });
+    expect(crearUsuario).toHaveBeenCalledWith({
+      run: "191102207",
+      nombre: "Ana",
+      apellidos: "Pérez",
+      correo: "ana.perez@gmail.com",
+      contrasena: "abcd",
+      tipo: "Vendedor",
+      fechaNacimiento: "",
+      region: "Región de Valparaíso",
+      comuna: "Quilpué",
+      direccion: "Calle 1"
+    });
   });
 
-  it("rechaza un correo que ya usa otro usuario", async () => {
+  it("muestra el error de la API si el correo ya lo usa otro usuario y no cambia de página", async () => {
+    crearUsuario.mockRejectedValue({ response: { status: 409, data: { mensaje: "El correo ya está registrado" } } });
     renderFormulario("/admin/usuarios/nuevo");
 
     await completarFormulario("camila.reyes@gmail.com");
     await userEvent.click(screen.getByRole("button", { name: "Guardar usuario" }));
 
-    expect(await screen.findByText("Ya existe un usuario con ese correo.")).toBeInTheDocument();
-    expect(obtenerUsuarios()).toHaveLength(3);
+    expect(await screen.findByText("El correo ya está registrado")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Nuevo usuario" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Guardar usuario" })).toBeEnabled();
   });
 
-  it("al editar, carga los datos, permite conservar su propio correo y guarda los cambios", async () => {
+  it("al editar, carga los datos y guarda los cambios sin enviar contraseña si se deja vacía", async () => {
     renderFormulario("/admin/usuarios/1/editar");
-    expect(screen.getByLabelText("Nombre")).toHaveValue("Camila");
+    expect(await screen.findByLabelText("Nombre")).toHaveValue("Camila");
     expect(screen.getByLabelText("Correo")).toHaveValue("camila.reyes@gmail.com");
+    expect(screen.getByLabelText("Nueva contraseña (opcional)")).toHaveValue("");
 
     const nombre = screen.getByLabelText("Nombre");
     await userEvent.clear(nombre);
@@ -95,13 +119,23 @@ describe("AdminUsuarioForm", () => {
     await userEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
     expect(await screen.findByRole("heading", { name: "Lista de usuarios" })).toBeInTheDocument();
-    expect(obtenerUsuarioPorId(1).nombre).toBe("Camila Andrea");
-    expect(obtenerUsuarios()).toHaveLength(3);
+    expect(actualizarUsuario).toHaveBeenCalledWith(1, expect.objectContaining({ nombre: "Camila Andrea", tipo: "Cliente" }));
+    expect(actualizarUsuario.mock.calls[0][1]).not.toHaveProperty("contrasena");
   });
 
-  it("muestra un mensaje si el usuario a editar no existe", () => {
+  it("al editar, envía la contraseña solo si se escribe una nueva", async () => {
+    renderFormulario("/admin/usuarios/1/editar");
+
+    await userEvent.type(await screen.findByLabelText("Nueva contraseña (opcional)"), "nueva1");
+    await userEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    expect(await screen.findByRole("heading", { name: "Lista de usuarios" })).toBeInTheDocument();
+    expect(actualizarUsuario).toHaveBeenCalledWith(1, expect.objectContaining({ contrasena: "nueva1" }));
+  });
+
+  it("muestra un mensaje si el usuario a editar no existe", async () => {
     renderFormulario("/admin/usuarios/999/editar");
 
-    expect(screen.getByRole("heading", { name: "Usuario no encontrado" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Usuario no encontrado" })).toBeInTheDocument();
   });
 });

@@ -1,21 +1,20 @@
 import { Link } from "react-router-dom";
-import { obtenerUsuarios } from "../../data/db";
 import { useCargar } from "../../hooks/useCargar";
 import { obtenerProductos } from "../../services/productosService";
+import { obtenerUsuarios } from "../../services/usuariosService";
 
-// Una sola petición a la API entrega el total y los productos con stock crítico
+// Pide productos y usuarios en paralelo y calcula los totales
 async function cargarResumen() {
-  const productos = await obtenerProductos();
+  const [productos, usuarios] = await Promise.all([obtenerProductos(), obtenerUsuarios()]);
   return {
     totalProductos: productos.length,
+    totalUsuarios: usuarios.length,
     totalCriticos: productos.filter((p) => p.stock <= p.stockCritico).length
   };
 }
 
 export default function AdminInicio() {
   const { datos, cargando, error } = useCargar(cargarResumen, []);
-  // TODO paso 6: los usuarios todavía vienen de db.js hasta que la API tenga su CRUD
-  const totalUsuarios = obtenerUsuarios().length;
   const valor = (n) => (cargando || error ? "—" : n);
 
   return (
@@ -32,7 +31,7 @@ export default function AdminInicio() {
           <p>Productos registrados</p>
         </article>
         <article className="admin-tarjeta">
-          <h2>{totalUsuarios}</h2>
+          <h2>{valor(datos?.totalUsuarios)}</h2>
           <p>Usuarios registrados</p>
         </article>
         <article className="admin-tarjeta admin-tarjeta--alerta">
