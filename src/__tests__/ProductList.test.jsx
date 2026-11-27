@@ -1,14 +1,14 @@
 import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import ProductList from "../components/ProductList";
-import { productosSemilla } from "../data/db";
+import { productosPrueba } from "./productosPrueba";
 import { renderConProveedores } from "./utils";
 
 describe("ProductList", () => {
   it("renderiza una tarjeta por cada producto del conjunto de datos", () => {
-    renderConProveedores(<ProductList productos={productosSemilla} onAgregar={() => {}} />);
+    renderConProveedores(<ProductList productos={productosPrueba} onAgregar={() => {}} />);
 
-    expect(screen.getAllByRole("article")).toHaveLength(productosSemilla.length);
+    expect(screen.getAllByRole("article")).toHaveLength(productosPrueba.length);
     expect(screen.getByText("Lavanda")).toBeInTheDocument();
   });
 
