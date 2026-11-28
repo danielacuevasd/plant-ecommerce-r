@@ -22,7 +22,7 @@ export default function Login() {
     const nuevos = validarLogin(datos);
     setErrores(nuevos);
     setErrorGeneral("");
-    navegar(rutaInicial(resultado.sesion.tipo));
+    if (Object.keys(nuevos).length > 0) return;
 
     setEnviando(true);
     const resultado = await iniciarSesion(datos.correo, datos.contrasena);
@@ -32,7 +32,7 @@ export default function Login() {
       setErrorGeneral(resultado.error);
       return;
     }
-    navegar(resultado.sesion.tipo === "Administrador" ? "/admin" : "/");
+    navegar(rutaInicial(resultado.sesion.tipo));
   }
 
   return (
