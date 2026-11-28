@@ -128,7 +128,7 @@ describe("validarProducto", () => {
     expect(validarProducto({ ...valido, precio: "0" }).precio).toBeUndefined();
     expect(validarProducto({ ...valido, precio: "-5" }).precio).toMatch(/mayor o igual a 0/);
     expect(validarProducto({ ...valido, precio: "abc" }).precio).toBeDefined();
-    expect(validarProducto({ ...valido, precio: "" }).precio).toBeDefined();
+    expect(validarProducto({ ...valido, precio: "7000.5" }).precio).toMatch(/entero/);
   });
 
   it("el stock debe ser un entero mayor o igual a 0", () => {
@@ -189,5 +189,24 @@ describe("validarUsuarioAdmin", () => {
     expect(Object.keys(errores).sort()).toEqual([
       "apellidos", "comuna", "contrasena", "correo", "direccion", "nombre", "region", "run", "tipo"
     ]);
+  });
+});
+
+describe("validarUsuarioAdmin (edición)", () => {
+  const datos = {
+    run: "191102207", nombre: "Ana", apellidos: "Pérez", correo: "ana@gmail.com",
+    contrasena: "", tipo: "Cliente", region: "Región de Valparaíso", comuna: "Quilpué", direccion: "Calle 1"
+  };
+
+  it("al crear, la contraseña es obligatoria", () => {
+    expect(validarUsuarioAdmin(datos).contrasena).toBeDefined();
+  });
+
+  it("al editar, se puede dejar la contraseña vacía", () => {
+    expect(validarUsuarioAdmin(datos, { edicion: true }).contrasena).toBeUndefined();
+  });
+
+  it("al editar, si se escribe una contraseña igual debe ser válida", () => {
+    expect(validarUsuarioAdmin({ ...datos, contrasena: "ab" }, { edicion: true }).contrasena).toBeDefined();
   });
 });

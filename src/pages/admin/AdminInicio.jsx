@@ -1,10 +1,21 @@
 import { Link } from "react-router-dom";
-import { obtenerProductos, obtenerProductosStockCritico, obtenerUsuarios } from "../../data/db";
+import { useCargar } from "../../hooks/useCargar";
+import { obtenerProductos } from "../../services/productosService";
+import { obtenerUsuarios } from "../../services/usuariosService";
+
+// Pide productos y usuarios en paralelo y calcula los totales
+async function cargarResumen() {
+  const [productos, usuarios] = await Promise.all([obtenerProductos(), obtenerUsuarios()]);
+  return {
+    totalProductos: productos.length,
+    totalUsuarios: usuarios.length,
+    totalCriticos: productos.filter((p) => p.stock <= p.stockCritico).length
+  };
+}
 
 export default function AdminInicio() {
-  const totalProductos = obtenerProductos().length;
-  const totalUsuarios = obtenerUsuarios().length;
-  const totalCriticos = obtenerProductosStockCritico().length;
+  const { datos, cargando, error } = useCargar(cargarResumen, []);
+  const valor = (n) => (cargando || error ? "—" : n);
 
   return (
     <>
@@ -12,17 +23,19 @@ export default function AdminInicio() {
         <h1>Panel de administración</h1>
       </header>
 
+      {error && <p role="alert" className="mensaje-error">{error}</p>}
+
       <section className="admin-resumen">
         <article className="admin-tarjeta">
-          <h2>{totalProductos}</h2>
+          <h2>{valor(datos?.totalProductos)}</h2>
           <p>Productos registrados</p>
         </article>
         <article className="admin-tarjeta">
-          <h2>{totalUsuarios}</h2>
+          <h2>{valor(datos?.totalUsuarios)}</h2>
           <p>Usuarios registrados</p>
         </article>
         <article className="admin-tarjeta admin-tarjeta--alerta">
-          <h2>{totalCriticos}</h2>
+          <h2>{valor(datos?.totalCriticos)}</h2>
           <p>Productos con stock crítico</p>
         </article>
       </section>

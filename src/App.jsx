@@ -12,12 +12,14 @@ import Login from "./pages/Login";
 import Registro from "./pages/Registro";
 import Contacto from "./pages/Contacto";
 import AdminLayout from "./components/AdminLayout";
+import RequiereRol from "./components/RequiereRol";
 import AdminInicio from "./pages/admin/AdminInicio";
 import AdminProductos from "./pages/admin/AdminProductos";
 import AdminProductoForm from "./pages/admin/AdminProductoForm";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminUsuarioForm from "./pages/admin/AdminUsuarioForm";
-
+import AdminMensajes from "./pages/admin/AdminMensajes";
+import { ROLES } from "./utils/roles";
 
 export default function App() {
   return (
@@ -35,14 +37,21 @@ export default function App() {
             <Route path="registro" element={<Registro />} />
             <Route path="contacto" element={<Contacto />} />
           </Route>
+
           <Route path="admin" element={<AdminLayout />}>
-            <Route index element={<AdminInicio />} />
+            {/* Administrador y vendedor (el vendedor solo ve el listado) */}
             <Route path="productos" element={<AdminProductos />} />
-            <Route path="productos/nuevo" element={<AdminProductoForm />} />
-            <Route path="productos/:id/editar" element={<AdminProductoForm />} />
-            <Route path="usuarios" element={<AdminUsuarios />} />
-            <Route path="usuarios/nuevo" element={<AdminUsuarioForm />} />
-            <Route path="usuarios/:id/editar" element={<AdminUsuarioForm />} />
+
+            {/* Solo administrador */}
+            <Route element={<RequiereRol roles={[ROLES.ADMIN]} />}>
+              <Route index element={<AdminInicio />} />
+              <Route path="productos/nuevo" element={<AdminProductoForm />} />
+              <Route path="productos/:id/editar" element={<AdminProductoForm />} />
+              <Route path="usuarios" element={<AdminUsuarios />} />
+              <Route path="usuarios/nuevo" element={<AdminUsuarioForm />} />
+              <Route path="usuarios/:id/editar" element={<AdminUsuarioForm />} />
+              <Route path="mensajes" element={<AdminMensajes />} />
+            </Route>
           </Route>
         </Routes>
       </CartProvider>

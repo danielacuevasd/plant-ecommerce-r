@@ -1,9 +1,23 @@
 import { screen, within } from "@testing-library/react";
 import { Route, Routes } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import AdminLayout from "../components/AdminLayout";
 import AdminInicio from "../pages/admin/AdminInicio";
+import { obtenerProductos } from "../services/productosService";
+import { obtenerUsuarios } from "../services/usuariosService";
+import { productosPrueba } from "./productosPrueba";
+import { usuariosPrueba } from "./usuariosPrueba";
 import { renderConProveedores } from "./utils";
+
+vi.mock("../services/productosService");
+vi.mock("../services/usuariosService");
+
+beforeEach(() => {
+  vi.resetAllMocks();
+  localStorage.clear();
+  obtenerProductos.mockResolvedValue(productosPrueba);
+  obtenerUsuarios.mockResolvedValue(usuariosPrueba);
+});
 
 function iniciarSesionComo(tipo) {
   localStorage.setItem(
@@ -39,7 +53,7 @@ describe("AdminLayout (acceso al panel)", () => {
     expect(screen.getByRole("heading", { name: "Pantalla de login" })).toBeInTheDocument();
   });
 
-  it("permite el acceso a un administrador y muestra el menú lateral", () => {
+  it("permite el acceso a un administrador y muestra el menú lateral", async () => {
     iniciarSesionComo("Administrador");
     renderAdmin();
 
@@ -47,17 +61,27 @@ describe("AdminLayout (acceso al panel)", () => {
     const menu = screen.getByRole("navigation", { name: "Panel administrador" });
     expect(within(menu).getByRole("link", { name: "Productos" })).toHaveAttribute("href", "/admin/productos");
     expect(within(menu).getByRole("link", { name: "Usuarios" })).toHaveAttribute("href", "/admin/usuarios");
+    expect(within(menu).getByRole("link", { name: "Mensajes" })).toHaveAttribute("href", "/admin/mensajes");
+    await screen.findByText("8");
   });
 });
 
 describe("AdminInicio", () => {
-  it("muestra los totales de productos, usuarios y stock crítico", () => {
+  it("muestra los totales de productos, usuarios y stock crítico", async () => {
     iniciarSesionComo("Administrador");
     renderAdmin();
 
     const tarjeta = (texto) => screen.getByText(texto).closest("article");
-    expect(within(tarjeta("Productos registrados")).getByText("8")).toBeInTheDocument();
+    expect(await within(tarjeta("Productos registrados")).findByText("8")).toBeInTheDocument();
     expect(within(tarjeta("Usuarios registrados")).getByText("3")).toBeInTheDocument();
     expect(within(tarjeta("Productos con stock crítico")).getByText("1")).toBeInTheDocument();
+  });
+
+  it("muestra el error si la API falla", async () => {
+    obtenerUsuarios.mockRejectedValue({ response: { data: { mensaje: "No se pudo conectar con el servidor." } } });
+    iniciarSesionComo("Administrador");
+    renderAdmin();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("No se pudo conectar con el servidor.");
   });
 });

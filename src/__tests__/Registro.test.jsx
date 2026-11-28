@@ -1,10 +1,17 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router-dom";
-import { describe, expect, it } from "vitest";
-import { obtenerUsuarios } from "../data/db";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import Registro from "../pages/Registro";
+import { registrarUsuario } from "../services/authService";
 import { renderConProveedores } from "./utils";
+
+vi.mock("../services/authService");
+
+beforeEach(() => {
+  vi.resetAllMocks();
+  localStorage.clear();
+});
 
 function renderRegistro() {
   return renderConProveedores(
@@ -37,6 +44,7 @@ describe("Registro", () => {
     await userEvent.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(screen.getAllByRole("alert").length).toBeGreaterThanOrEqual(6);
+    expect(registrarUsuario).not.toHaveBeenCalled();
   });
 
   it("las comunas dependen de la región seleccionada (estado)", async () => {
@@ -68,24 +76,32 @@ describe("Registro", () => {
     expect(await screen.findByText("Las contraseñas no coinciden.")).toBeInTheDocument();
   });
 
-  it("rechaza un correo ya registrado", async () => {
+  it("muestra el error de la API si el correo ya está registrado", async () => {
+    registrarUsuario.mockRejectedValue({
+      response: { status: 409, data: { mensaje: "El correo ya está registrado" } }
+    });
     renderRegistro();
 
     await completarFormulario("camila.reyes@gmail.com");
     await userEvent.click(screen.getByRole("button", { name: "Registrar" }));
 
-    expect(await screen.findByText("Ya existe una cuenta con ese correo.")).toBeInTheDocument();
-    expect(obtenerUsuarios()).toHaveLength(3);
+    expect(await screen.findByText("El correo ya está registrado")).toBeInTheDocument();
+    expect(localStorage.getItem("florae_sesion")).toBeNull();
   });
 
-  it("un registro válido crea el usuario, inicia sesión y vuelve a la tienda", async () => {
+  it("un registro válido llama a la API, inicia sesión y vuelve a la tienda", async () => {
+    registrarUsuario.mockResolvedValue({
+      id: 4, nombre: "Ana", correo: "ana.perez@gmail.com", tipo: "Cliente"
+    });
     renderRegistro();
 
     await completarFormulario();
     await userEvent.click(screen.getByRole("button", { name: "Registrar" }));
 
     expect(await screen.findByRole("heading", { name: "Inicio de la tienda" })).toBeInTheDocument();
-    expect(obtenerUsuarios()).toHaveLength(4);
+    expect(registrarUsuario).toHaveBeenCalledWith(
+      expect.objectContaining({ run: "191102207", correo: "ana.perez@gmail.com", contrasena: "abcd" })
+    );
     expect(JSON.parse(localStorage.getItem("florae_sesion")).nombre).toBe("Ana");
   });
 });

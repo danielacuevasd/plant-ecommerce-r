@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import CampoFormulario from "../../components/CampoFormulario";
-import { actualizarUsuario, crearUsuario, existeCorreo, obtenerUsuarioPorId } from "../../data/db";
 import { obtenerComunas, regiones } from "../../data/regiones";
+import { useCargar } from "../../hooks/useCargar";
+import { mensajeDeError } from "../../services/api";
+import { actualizarUsuario, crearUsuario, obtenerUsuarioPorId } from "../../services/usuariosService";
 import { validarUsuarioAdmin } from "../../utils/validaciones";
 
 const vacio = {
@@ -10,17 +12,14 @@ const vacio = {
   fechaNacimiento: "", region: "", comuna: "", direccion: ""
 };
 
-export default function AdminUsuarioForm() {
-  const { id } = useParams();
+function FormularioUsuario({ existente }) {
   const navegar = useNavigate();
-  const existente = id ? obtenerUsuarioPorId(id) : null;
 
-  const [datos, setDatos] = useState(() => (existente ? { ...vacio, ...existente } : vacio));
+  // La API nunca devuelve la contraseña: al editar el campo parte vacío
+  const [datos, setDatos] = useState(() => (existente ? { ...vacio, ...existente, contrasena: "" } : vacio));
   const [errores, setErrores] = useState({});
-
-  if (id && !existente) {
-    return <h1>Usuario no encontrado</h1>;
-  }
+  const [errorGeneral, setErrorGeneral] = useState("");
+  const [enviando, setEnviando] = useState(false);
 
   function manejarCambio(evento) {
     const { name, value } = evento.target;
@@ -28,14 +27,11 @@ export default function AdminUsuarioForm() {
     setDatos(name === "region" ? { ...datos, region: value, comuna: "" } : { ...datos, [name]: value });
   }
 
-  function manejarSubmit(evento) {
+  async function manejarSubmit(evento) {
     evento.preventDefault();
-    const nuevos = validarUsuarioAdmin(datos);
-    // El correo no puede repetirse, pero un usuario puede conservar el suyo al editar
-    if (!nuevos.correo && existeCorreo(datos.correo, existente?.id)) {
-      nuevos.correo = "Ya existe un usuario con ese correo.";
-    }
+    const nuevos = validarUsuarioAdmin(datos, { edicion: Boolean(existente) });
     setErrores(nuevos);
+    setErrorGeneral("");
     if (Object.keys(nuevos).length > 0) return;
 
     const usuario = {
@@ -43,18 +39,24 @@ export default function AdminUsuarioForm() {
       nombre: datos.nombre.trim(),
       apellidos: datos.apellidos.trim(),
       correo: datos.correo.trim(),
-      contrasena: datos.contrasena,
       tipo: datos.tipo,
       fechaNacimiento: datos.fechaNacimiento,
       region: datos.region,
       comuna: datos.comuna,
       direccion: datos.direccion.trim()
     };
+    // Si no se escribe contraseña al editar, la API conserva la actual
+    if (datos.contrasena) usuario.contrasena = datos.contrasena;
 
-    if (existente) actualizarUsuario(existente.id, usuario);
-    else crearUsuario(usuario);
-
-    navegar("/admin/usuarios");
+    setEnviando(true);
+    try {
+      if (existente) await actualizarUsuario(existente.id, usuario);
+      else await crearUsuario(usuario);
+      navegar("/admin/usuarios");
+    } catch (error) {
+      setErrorGeneral(mensajeDeError(error));
+      setEnviando(false);
+    }
   }
 
   return (
@@ -81,7 +83,8 @@ export default function AdminUsuarioForm() {
 
         <div className="campo-formulario-doble">
           <CampoFormulario
-            id="contrasena" label="Contraseña" type="password" maxLength={10}
+            id="contrasena" type="password" maxLength={10} autoComplete="new-password"
+            label={existente ? "Nueva contraseña (opcional)" : "Contraseña"}
             value={datos.contrasena} onChange={manejarCambio} error={errores.contrasena}
           />
           <CampoFormulario
@@ -122,10 +125,29 @@ export default function AdminUsuarioForm() {
           value={datos.direccion} onChange={manejarCambio} error={errores.direccion}
         />
 
-        <button type="submit" className="btn-principal">
-          {existente ? "Guardar cambios" : "Guardar usuario"}
+        {errorGeneral && <p role="alert" className="mensaje-error">{errorGeneral}</p>}
+
+        <button type="submit" className="btn-principal" disabled={enviando}>
+          {enviando ? "Guardando..." : existente ? "Guardar cambios" : "Guardar usuario"}
         </button>
       </form>
     </>
   );
+}
+
+export default function AdminUsuarioForm() {
+  const { id } = useParams();
+  const { datos: existente, cargando, error } = useCargar(
+    () => (id ? obtenerUsuarioPorId(id) : Promise.resolve(null)),
+    [id]
+  );
+
+  // Usuario nuevo: no hay nada que cargar
+  if (!id) return <FormularioUsuario key="nuevo" existente={null} />;
+
+  if (cargando) return <p role="status" className="texto-secundario">Cargando usuario...</p>;
+  if (error) return <p role="alert" className="mensaje-error">{error}</p>;
+  if (!existente) return <h1>Usuario no encontrado</h1>;
+
+  return <FormularioUsuario key={existente.id} existente={existente} />;
 }

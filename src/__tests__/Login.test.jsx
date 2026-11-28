@@ -1,9 +1,17 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import Login from "../pages/Login";
+import { iniciarSesion } from "../services/authService";
 import { renderConProveedores } from "./utils";
+
+vi.mock("../services/authService");
+
+beforeEach(() => {
+  vi.resetAllMocks();
+  localStorage.clear();
+});
 
 function renderLogin() {
   return renderConProveedores(
@@ -30,6 +38,7 @@ describe("Login", () => {
     await userEvent.click(screen.getByRole("button", { name: "Iniciar sesión" }));
 
     expect(screen.getAllByRole("alert").length).toBeGreaterThan(0);
+    expect(iniciarSesion).not.toHaveBeenCalled();
   });
 
   it("actualiza el estado del campo correo al escribir", async () => {
@@ -41,7 +50,10 @@ describe("Login", () => {
     expect(correo).toHaveValue("ana@gmail.com");
   });
 
-  it("muestra un error si las credenciales no existen", async () => {
+  it("muestra el mensaje de la API si las credenciales son incorrectas", async () => {
+    iniciarSesion.mockRejectedValue({
+      response: { status: 401, data: { mensaje: "Correo o contraseña incorrectos." } }
+    });
     renderLogin();
 
     await ingresar("nadie@gmail.com", "clave1");
@@ -51,16 +63,24 @@ describe("Login", () => {
   });
 
   it("un cliente entra a la tienda y la sesión no guarda la contraseña", async () => {
+    iniciarSesion.mockResolvedValue({
+      id: 1, nombre: "Camila", correo: "camila.reyes@gmail.com", tipo: "Cliente"
+    });
     renderLogin();
 
     await ingresar("camila.reyes@gmail.com", "cliente");
 
     expect(await screen.findByRole("heading", { name: "Inicio de la tienda" })).toBeInTheDocument();
-    const sesion = JSON.parse(localStorage.getItem("florae_sesion"));
-    expect(sesion).toEqual({ id: 1, nombre: "Camila", correo: "camila.reyes@gmail.com", tipo: "Cliente" });
+    expect(iniciarSesion).toHaveBeenCalledWith("camila.reyes@gmail.com", "cliente");
+    expect(JSON.parse(localStorage.getItem("florae_sesion"))).toEqual({
+      id: 1, nombre: "Camila", correo: "camila.reyes@gmail.com", tipo: "Cliente"
+    });
   });
 
   it("un administrador es enviado al panel", async () => {
+    iniciarSesion.mockResolvedValue({
+      id: 3, nombre: "Marcelo", correo: "marcelo.caceres@profesor.duoc.cl", tipo: "Administrador"
+    });
     renderLogin();
 
     await ingresar("marcelo.caceres@profesor.duoc.cl", "admin");

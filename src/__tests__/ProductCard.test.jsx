@@ -2,10 +2,10 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import ProductCard from "../components/ProductCard";
-import { productosSemilla } from "../data/db";
+import { productosPrueba } from "./productosPrueba";
 import { renderConProveedores } from "./utils";
 
-const producto = productosSemilla[0];
+const producto = productosPrueba[0];
 
 describe("ProductCard", () => {
   it("muestra nombre, precio e imagen recibidos por props", () => {

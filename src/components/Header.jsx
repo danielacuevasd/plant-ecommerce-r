@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import { ROLES } from "../utils/roles";
 
 export default function Header() {
   const [menuAbierto, setMenuAbierto] = useState(false);
@@ -50,7 +51,8 @@ export default function Header() {
         {sesion ? (
           <>
             <span>Hola, {sesion.nombre}</span>
-            {sesion.tipo === "Administrador" && <Link to="/admin">Panel admin</Link>}
+            {sesion.tipo === ROLES.ADMIN && <Link to="/admin">Panel admin</Link>}
+            {sesion.tipo === ROLES.VENDEDOR && <Link to="/admin/productos">Panel vendedor</Link>}
             <button type="button" className="btn-secundario" onClick={salir}>
               Cerrar sesión
             </button>

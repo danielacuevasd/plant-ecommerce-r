@@ -2,17 +2,18 @@ import { useMemo, useState } from "react";
 import ProductList from "../components/ProductList";
 import { useCart } from "../context/CartContext";
 import { categorias } from "../data/categorias";
-import { obtenerProductos } from "../data/db";
+import { useCargar } from "../hooks/useCargar";
+import { obtenerProductos } from "../services/productosService";
 import { filtrarProductos } from "../utils/filtros";
 
 export default function Productos() {
   const { agregar } = useCart();
-  const [productos] = useState(obtenerProductos);
+  const { datos: productos, cargando, error } = useCargar(() => obtenerProductos(), []);
   const [texto, setTexto] = useState("");
   const [categoria, setCategoria] = useState("");
 
   const visibles = useMemo(
-    () => filtrarProductos(productos, { texto, categoria }),
+    () => filtrarProductos(productos ?? [], { texto, categoria }),
     [productos, texto, categoria]
   );
 
@@ -20,9 +21,11 @@ export default function Productos() {
     <>
       <section className="encabezado-pagina">
         <h1>Productos</h1>
-        <p>
-          {visibles.length} {visibles.length === 1 ? "producto disponible" : "productos disponibles"}
-        </p>
+        {productos && (
+          <p>
+            {visibles.length} {visibles.length === 1 ? "producto disponible" : "productos disponibles"}
+          </p>
+        )}
       </section>
 
       <section className="listado-productos">
@@ -54,7 +57,9 @@ export default function Productos() {
           </div>
         </form>
 
-        <ProductList productos={visibles} onAgregar={(id) => agregar(id, 1)} />
+        {cargando && <p role="status" className="texto-secundario">Cargando productos...</p>}
+        {error && <p role="alert" className="mensaje-error">{error}</p>}
+        {productos && <ProductList productos={visibles} onAgregar={(id) => agregar(id, 1)} />}
       </section>
     </>
   );
