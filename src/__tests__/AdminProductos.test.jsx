@@ -14,6 +14,11 @@ let lista;
 beforeEach(() => {
   vi.resetAllMocks();
   localStorage.clear();
+  // Solo el administrador puede modificar productos
+  localStorage.setItem(
+    "florae_sesion",
+    JSON.stringify({ id: 3, nombre: "Marcelo", correo: "marcelo.caceres@profesor.duoc.cl", tipo: "Administrador" })
+  );
   lista = [...productosPrueba];
   obtenerProductos.mockImplementation(async () => lista);
   eliminarProducto.mockImplementation(async (id) => {
