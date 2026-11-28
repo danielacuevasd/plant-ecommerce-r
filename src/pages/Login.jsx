@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import CampoFormulario from "../components/CampoFormulario";
 import { useAuth } from "../context/AuthContext";
 import { validarLogin } from "../utils/validaciones";
+import { rutaInicial } from "../utils/roles";
 
 export default function Login() {
   const { iniciarSesion } = useAuth();
@@ -21,7 +22,7 @@ export default function Login() {
     const nuevos = validarLogin(datos);
     setErrores(nuevos);
     setErrorGeneral("");
-    if (Object.keys(nuevos).length > 0) return;
+    navegar(rutaInicial(resultado.sesion.tipo));
 
     setEnviando(true);
     const resultado = await iniciarSesion(datos.correo, datos.contrasena);

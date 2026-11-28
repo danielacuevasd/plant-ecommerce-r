@@ -1,11 +1,17 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { useCargar } from "../../hooks/useCargar";
 import { mensajeDeError } from "../../services/api";
 import { eliminarProducto, obtenerProductos } from "../../services/productosService";
 import { formatearPrecio } from "../../utils/formato";
+import { ROLES } from "../../utils/roles";
 
 export default function AdminProductos() {
+  const { sesion } = useAuth();
+  // Solo el administrador modifica productos; el vendedor únicamente los consulta
+  const puedeModificar = sesion?.tipo === ROLES.ADMIN;
+
   // Al cambiar "version" se vuelve a pedir el listado a la API
   const [version, setVersion] = useState(0);
   const [errorEliminar, setErrorEliminar] = useState("");
@@ -28,7 +34,7 @@ export default function AdminProductos() {
     <>
       <div className="admin-encabezado-lista">
         <h1>Productos</h1>
-        <Link to="/admin/productos/nuevo" className="btn-principal">Nuevo producto</Link>
+        {puedeModificar && <Link to="/admin/productos/nuevo" className="btn-principal">Nuevo producto</Link>}
       </div>
 
       {cargando && <p role="status" className="texto-secundario">Cargando productos...</p>}
@@ -69,10 +75,16 @@ export default function AdminProductos() {
                       </span>
                     </td>
                     <td className="acciones">
-                      <Link to={`/admin/productos/${p.id}/editar`}>Editar</Link>
-                      <button type="button" className="accion-eliminar" onClick={() => manejarEliminar(p)}>
-                        Eliminar
-                      </button>
+                      {puedeModificar ? (
+                        <>
+                          <Link to={`/admin/productos/${p.id}/editar`}>Editar</Link>
+                          <button type="button" className="accion-eliminar" onClick={() => manejarEliminar(p)}>
+                            Eliminar
+                          </button>
+                        </>
+                      ) : (
+                        <Link to={`/productos/${p.id}`}>Ver detalle</Link>
+                      )}
                     </td>
                   </tr>
                 );
